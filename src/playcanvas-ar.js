@@ -535,64 +535,113 @@ ArCamera.prototype.stopTracking = function () {
 ArCamera.prototype.supportsAr = function () {
     return (navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 };
-alert(539);
+
 ArCamera.prototype.enterAr = function (success, error) {
     if (!this.cameraCalibration) {
         console.error('ERROR: No camera calibration file set on your arCamera script. Try assigning camera_para.dat.');
     }
 
     var self = this;
-    var front = false;
-    var f1 = "user";
-    var f2 = {
-        exact: "environment",
-    };
-    var constraints = {
-        audio: false,
-        video: {
-            // Prefer the rear camera
-            // facingMode: "environment"
-            facingMode: (front? f1 : f2)
-        }
-    };
-    console.log(constraints);
-    navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-        self.videoPlaying = false;
 
-        // Create the video element to receive the camera stream
-        var video = document.createElement('video');
-
-        video.setAttribute('autoplay', '');
-        video.setAttribute('muted', '');
-        // This is critical for iOS or the video initially goes fullscreen
-        video.setAttribute('playsinline', '');
-        video.srcObject = stream;
-
-        self.video = video;
-
-        // Check for both video and canvas resizing
-        // Changing screen orientation on mobile can change both!
-        self.app.graphicsDevice.on('resizecanvas', function () {
-            self.onResize();
-        });
-        video.addEventListener('resize', function () {
-            self.onResize();
-        });
-
-        // Only play the video when it's actually ready
-        video.addEventListener('canplay', function () {
-            if (!self.videoPlaying) {
-                self.startVideo();
-                self.startTracking();
-                self.videoPlaying = true;
-                if (success) success();
+    var u = navigator.userAgent, app = navigator.appVersion;   
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1; //android终端或者uc浏览器
+    if (isAndroid) {
+        var _sourceId = '';
+        navigator.mediaDevices.enumerateDevices().then(function(MediaDeviceInfo) {
+            for (var k = 0, length = MediaDeviceInfo.length; k < length; k++) {
+                if (MediaDeviceInfo[k].kind == 'videoinput' || MediaDeviceInfo[k].kind == 'video') {
+                    _sourceId = MediaDeviceInfo[k].deviceId;
+                }
             }
-        });
+            var constraints = {
+                audio: false ,
+                video: {
+                    'optional': [{  'sourceId': _sourceId }]
+                }
+            };
+            navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+                self.videoPlaying = false;
 
-        // iOS needs a user action to start the video
-        if (pc.platform.mobile) {
-            window.addEventListener('touchstart', function (e) {
-                e.preventDefault();
+                // Create the video element to receive the camera stream
+                var video = document.createElement('video');
+
+                video.setAttribute('autoplay', '');
+                video.setAttribute('muted', '');
+                // This is critical for iOS or the video initially goes fullscreen
+                video.setAttribute('playsinline', '');
+                video.srcObject = stream;
+
+                self.video = video;
+
+                // Check for both video and canvas resizing
+                // Changing screen orientation on mobile can change both!
+                self.app.graphicsDevice.on('resizecanvas', function () {
+                    self.onResize();
+                });
+                video.addEventListener('resize', function () {
+                    self.onResize();
+                });
+
+                // Only play the video when it's actually ready
+                video.addEventListener('canplay', function () {
+                    if (!self.videoPlaying) {
+                        self.startVideo();
+                        self.startTracking();
+                        self.videoPlaying = true;
+                        if (success) success();
+                    }
+                });
+
+                // iOS needs a user action to start the video
+                if (pc.platform.mobile) {
+                    window.addEventListener('touchstart', function (e) {
+                        e.preventDefault();
+                        if (!self.videoPlaying) {
+                            self.startVideo();
+                            self.startTracking();
+                            self.videoPlaying = true;
+                            if (success) success();
+                        }
+                    });
+                }
+            }).catch(function (e) {
+                if (error) error("ERROR: Unable to acquire camera stream");
+            });
+        });
+    } else {
+        var constraints = {
+            audio: false,
+            video: {
+                // Prefer the rear camera
+                // facingMode: "environment"
+                facingMode: (front? "user" : "environment")
+            }
+        };
+        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+            self.videoPlaying = false;
+
+            // Create the video element to receive the camera stream
+            var video = document.createElement('video');
+
+            video.setAttribute('autoplay', '');
+            video.setAttribute('muted', '');
+            // This is critical for iOS or the video initially goes fullscreen
+            video.setAttribute('playsinline', '');
+            video.srcObject = stream;
+
+            self.video = video;
+
+            // Check for both video and canvas resizing
+            // Changing screen orientation on mobile can change both!
+            self.app.graphicsDevice.on('resizecanvas', function () {
+                self.onResize();
+            });
+            video.addEventListener('resize', function () {
+                self.onResize();
+            });
+
+            // Only play the video when it's actually ready
+            video.addEventListener('canplay', function () {
                 if (!self.videoPlaying) {
                     self.startVideo();
                     self.startTracking();
@@ -600,10 +649,72 @@ ArCamera.prototype.enterAr = function (success, error) {
                     if (success) success();
                 }
             });
-        }
-    }).catch(function (e) {
-        if (error) error("ERROR: Unable to acquire camera stream");
-    });
+
+            // iOS needs a user action to start the video
+            if (pc.platform.mobile) {
+                window.addEventListener('touchstart', function (e) {
+                    e.preventDefault();
+                    if (!self.videoPlaying) {
+                        self.startVideo();
+                        self.startTracking();
+                        self.videoPlaying = true;
+                        if (success) success();
+                    }
+                });
+            }
+        }).catch(function (e) {
+            if (error) error("ERROR: Unable to acquire camera stream");
+        });
+    }
+
+    // navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+    //     self.videoPlaying = false;
+
+    //     // Create the video element to receive the camera stream
+    //     var video = document.createElement('video');
+
+    //     video.setAttribute('autoplay', '');
+    //     video.setAttribute('muted', '');
+    //     // This is critical for iOS or the video initially goes fullscreen
+    //     video.setAttribute('playsinline', '');
+    //     video.srcObject = stream;
+
+    //     self.video = video;
+
+    //     // Check for both video and canvas resizing
+    //     // Changing screen orientation on mobile can change both!
+    //     self.app.graphicsDevice.on('resizecanvas', function () {
+    //         self.onResize();
+    //     });
+    //     video.addEventListener('resize', function () {
+    //         self.onResize();
+    //     });
+
+    //     // Only play the video when it's actually ready
+    //     video.addEventListener('canplay', function () {
+    //         if (!self.videoPlaying) {
+    //             self.startVideo();
+    //             self.startTracking();
+    //             self.videoPlaying = true;
+    //             if (success) success();
+    //         }
+    //     });
+
+    //     // iOS needs a user action to start the video
+    //     if (pc.platform.mobile) {
+    //         window.addEventListener('touchstart', function (e) {
+    //             e.preventDefault();
+    //             if (!self.videoPlaying) {
+    //                 self.startVideo();
+    //                 self.startTracking();
+    //                 self.videoPlaying = true;
+    //                 if (success) success();
+    //             }
+    //         });
+    //     }
+    // }).catch(function (e) {
+    //     if (error) error("ERROR: Unable to acquire camera stream");
+    // });
 };
 
 ArCamera.prototype.exitAr = function () {
