@@ -543,16 +543,19 @@ ArCamera.prototype.enterAr = function (success, error) {
 
     var self = this;
     var front = false;
-
+    var f1 = "user";
+    var f2 = {
+        exact: "environment",
+    };
     var constraints = {
         audio: false,
         video: {
             // Prefer the rear camera
             // facingMode: "environment"
-            facingMode: (front? "user" : "environment")
+            facingMode: (front? f1 : f2)
         }
     };
-
+    console.log(constraints);
     navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
         self.videoPlaying = false;
 
