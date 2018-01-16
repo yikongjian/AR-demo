@@ -547,7 +547,10 @@ ArCamera.prototype.enterAr = function (success, error) {
         audio: false,
         video: {
             // Prefer the rear camera
-            facingMode: "environment"
+            // facingMode: "environment"
+            facingMode: {
+                exact : 'environment'
+            }
         }
     };
 
