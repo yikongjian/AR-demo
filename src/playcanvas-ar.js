@@ -535,22 +535,21 @@ ArCamera.prototype.stopTracking = function () {
 ArCamera.prototype.supportsAr = function () {
     return (navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 };
-alert(538);
+alert(539);
 ArCamera.prototype.enterAr = function (success, error) {
     if (!this.cameraCalibration) {
         console.error('ERROR: No camera calibration file set on your arCamera script. Try assigning camera_para.dat.');
     }
 
     var self = this;
+    var front = false;
 
     var constraints = {
         audio: false,
         video: {
             // Prefer the rear camera
             // facingMode: "environment"
-            facingMode: {
-                exact : 'environment'
-            }
+            facingMode: (front? "user" : "environment")
         }
     };
 
