@@ -613,8 +613,8 @@ ArCamera.prototype.enterAr = function (success, error) {
             audio: false,
             video: {
                 // Prefer the rear camera
-                // facingMode: "environment"
-                facingMode: (front? "user" : "environment")
+                facingMode: "environment"
+                // facingMode: (front? "user" : "environment")
             }
         };
         navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
